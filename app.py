@@ -8,3 +8,12 @@ df_claims  = pd.read_csv('data/sample type claim.csv' , sep = ';')
 date_cols = ['Date_start_contract', 'Date_last_renewal', 'Date_next_renewal', 'Date_birth', 'Date_driving_licence']
 for col in date_cols:
     df_policies[col] = pd.to_datetime(df_policies[col], format='%d/%m/%Y', errors='coerce')
+
+
+# Call the Agent code
+from Agent import app
+config = {"configurable": {"thread_id": "1"}}
+turn_1 = app.invoke(
+    input={"input": "Hello, my name is John. I am 30 years old and I have a car with 4 doors."},
+    config=config
+)
