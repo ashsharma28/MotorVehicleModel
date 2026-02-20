@@ -1,15 +1,20 @@
 import pickle
 import pandas as pd
+import logging
+import logger_setup
+
+# Configure module logger
+log = logging.getLogger(__name__)
 
 # Load the GLM model from the pickle file
 with open(r'glmm_model.pkl', 'rb') as file:
     loaded_glmm_model = pickle.load(file)
 
-print("GLM model successfully loaded from 'glmm_model.pkl'.")
+log.debug("GLM model successfully loaded from 'glmm_model.pkl'.")
 data_For_Shap_list = []
 # --- Prepare a sample for prediction with all preprocessing steps ---
 
-def get_prediction_from_GLM(i , df_policies):
+def get_prediction_from_GLM_withData(i , df_policies):
   """
   Predicts the premium for a new policy using a GLM model.
 
@@ -83,25 +88,9 @@ def get_prediction_from_GLM(i , df_policies):
   sorted_Feature_Importance = Feature_Importance.sort_values(by=Feature_Importance.index[0], axis=1, ascending=False)
   Top_3_Important_Factors = sorted_Feature_Importance.loc[: , list(sorted_Feature_Importance.columns[:3])]
   # Add the intercept (const) to see the full picture
-  print(Top_3_Important_Factors)
+  log.debug(Top_3_Important_Factors.to_string())
 
-  print(f"Predicted premium : {predicted_premium_glmm.iloc[0]:.2f}"  , f"Actual premium : {new_policy_raw_data['Premium'].values[0]:.2f}")
+  log.debug(f"Predicted premium : {predicted_premium_glmm.iloc[0]:.2f}",
+        f"Actual premium : {new_policy_raw_data['Premium'].values[0]:.2f}")
   return {f"Predicted premium" : predicted_premium_glmm.iloc[0] ,
-          "Top_3_Important_Factors" : Top_3_Important_Factors}
-
-
-
-if __name__ == "__main__":
-    # read two data: policy and claims from /content/drive/MyDrive/Colab Notebooks/Allianz Data/Motor vehicle insurance data.csv and  /content/drive/MyDrive/Colab Notebooks/Allianz Data/sample type claim.csv
-    import pandas as pd
-    # Increase pandas option max_for columns
-    pd.set_option('display.max_columns', None)
-    df_policies = pd.read_csv('data/Motor vehicle insurance data.csv', sep=";")
-    df_claims  = pd.read_csv('data/sample type claim.csv' , sep = ';')
-    # Convert dates to datetime objects
-    date_cols = ['Date_start_contract', 'Date_last_renewal', 'Date_next_renewal', 'Date_birth', 'Date_driving_licence']
-    for col in date_cols:
-        df_policies[col] = pd.to_datetime(df_policies[col], format='%d/%m/%Y', errors='coerce')
-
-    for i in range(2):
-        get_prediction_from_GLM(i, df_policies)
+      "Top_3_Important_Factors" : Top_3_Important_Factors}

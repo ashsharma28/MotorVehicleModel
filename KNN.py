@@ -2,7 +2,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.neighbors import NearestNeighbors
+import pandas as pd
+import logging
+import logger_setup
 
+log = logging.getLogger(__name__)
 
 def get_knn_pipeline_model(df_policies ):
     
@@ -29,7 +33,7 @@ def get_knn_pipeline_model(df_policies ):
 
     preprocessing_pipeline = Pipeline(steps=[('preprocessor', preprocessor)])
 
-    print("Preprocessing pipeline created successfully.")
+    log.debug("Preprocessing pipeline created successfully.")
 
 
     df_preprocessed_for_pipeline = df_policies.copy()
@@ -45,8 +49,8 @@ def get_knn_pipeline_model(df_policies ):
     median_length = df_policies['Length'].median() # Ensure median_length is available from training context
     df_preprocessed_for_pipeline['Length'] = df_preprocessed_for_pipeline['Length'].fillna(median_length)
 
-    print("Created df_preprocessed_for_pipeline with engineered features and imputed 'Length'.")
-    print(df_preprocessed_for_pipeline[['Age', 'Driving_Experience', 'Length']].head())
+    log.debug("Created df_preprocessed_for_pipeline with engineered features and imputed 'Length'.")
+    log.debug(df_preprocessed_for_pipeline[['Age', 'Driving_Experience', 'Length']].head().to_string())
 
     X_pipeline_input = df_preprocessed_for_pipeline[selected_numerical_features + selected_categorical_features]
 
@@ -56,9 +60,9 @@ def get_knn_pipeline_model(df_policies ):
     # 6. Retrieve the feature names after transformation
     transformed_feature_names = preprocessing_pipeline.named_steps['preprocessor'].get_feature_names_out()
 
-    print("Data transformed by preprocessing pipeline.")
-    print(f"Shape of transformed data: {X_transformed.shape}")
-    print(f"Number of transformed features: {len(transformed_feature_names)}")
+    log.debug("Data transformed by preprocessing pipeline.")
+    log.debug(f"Shape of transformed data: {X_transformed.shape}")
+    log.debug(f"Number of transformed features: {len(transformed_feature_names)}")
 
     # 7. Initialize a NearestNeighbors model
     knn_pipeline_model = NearestNeighbors(n_neighbors=3, algorithm='brute')
@@ -66,23 +70,23 @@ def get_knn_pipeline_model(df_policies ):
     # 8. Fit the NearestNeighbors model to the X_transformed data
     knn_pipeline_model.fit(X_transformed)
 
-    print("NearestNeighbors model trained successfully with pipeline-transformed data.")
+    log.debug("NearestNeighbors model trained successfully with pipeline-transformed data.")
     return preprocessing_pipeline, knn_pipeline_model
 
 
 
-def get_pickle_file():
+def get_pickle_file_model():
     import pickle
     with open(r'knn_pipeline_model.pkl', 'rb') as file:
         loaded_knn_pipeline_model = pickle.load(file)
-    print("KNN pipeline model successfully loaded from 'knn_pipeline_model.pkl'.")
+    log.debug("KNN pipeline model successfully loaded from 'knn_pipeline_model.pkl'.")
     return loaded_knn_pipeline_model
 
 def get_pickle_file_preprocessor():
     import pickle
     with open(r'preprocessing_pipeline.pkl', 'rb') as file:
         loaded_preprocessing_pipeline = pickle.load(file)
-    print("Preprocessing pipeline successfully loaded from 'preprocessing_pipeline.pkl'.")
+    log.debug("Preprocessing pipeline successfully loaded from 'preprocessing_pipeline.pkl'.")
     return loaded_preprocessing_pipeline
 
 
@@ -135,8 +139,8 @@ def predict_premium_with_pipeline(df_policies, new_policy_data, preprocessing_pi
 
     # 6. Find Nearest Neighbors
     distances, indices = knn_pipeline_model.kneighbors(policy_transformed)
-    print(f"Distances to neighbors: {distances}")
-    print(f"Indices of neighbors: {indices}")
+    log.debug(f"Distances to neighbors: {distances}")
+    log.debug(f"Indices of neighbors: {indices}")
 
     # 7. Predict Premium by averaging the premiums of the similar policies
     # Use the original df_model_encoded for premium lookup, as it contains the Premium column.
@@ -146,10 +150,10 @@ def predict_premium_with_pipeline(df_policies, new_policy_data, preprocessing_pi
 
     top_k_similar_rows = df_policies.iloc[indices[0]]
 
-    print(f"\nPredicted Premium: {predicted_premium:.2f}")
-    print(f"Actual Premium for new policy (if available): {new_policy_data[target_variable]:.2f}")
+    log.debug(f"\nPredicted Premium: {predicted_premium:.2f}")
+    log.debug(f"Actual Premium for new policy (if available): {new_policy_data[target_variable]:.2f}")
 
-    print(policy_df_for_pipeline.to_string())
-    print(top_k_similar_rows.to_string())
-
-    return predicted_premium, top_k_similar_rows
+    log.debug(policy_df_for_pipeline.to_string())
+    log.debug(top_k_similar_rows.to_string())
+    return {f"Predicted_premium" : predicted_premium ,
+          "Top_3_Similar_Policies" : top_k_similar_rows}
