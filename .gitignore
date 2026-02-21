@@ -2,3 +2,6 @@ openWebUIEnv/
 /__pycache__
 *.pyc
 allianzEnv/
+*.log
+.*
+assignmentEnv/
