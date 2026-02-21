@@ -1,4 +1,5 @@
-/assignmentEnv
-/openWebUIEnv
+assignmentEnv/
+openWebUIEnv/
 /__pycache__
 *.pyc
+allianzEnv/
